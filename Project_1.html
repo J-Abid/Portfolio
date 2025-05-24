@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Story of Money</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            overflow: hidden; /* Prevent scrollbars from presentation itself */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #presentation-container {
+            width: 90vw;
+            height: 80vh;
+            max-width: 1000px;
+            max-height: 700px;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden; /* Crucial for page transitions */
+            border-radius: 10px;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1;
+        }
+
+        .page h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .page h2 {
+            font-size: 1.8em;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        .page p, .page ul {
+            font-size: 1.1em;
+            line-height: 1.6;
+            max-width: 80%;
+        }
+        .page ul {
+            list-style: none;
+            padding: 0;
+        }
+        .page ul li {
+            background-color: #ecf0f1;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #navigation {
+            margin-top: 20px;
+        }
+
+        #navigation button {
+            padding: 10px 20px;
+            font-size: 1em;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #navigation button:hover {
+            background-color: #2980b9;
+        }
+        #navigation button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Page Specific Styles */
+        #page1-canvas-container {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+
+        #page2-icons {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+        .icon {
+            font-size: 3em;
+            padding: 20px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+        }
+
+        #page3-matter-container {
+            width: 80%;
+            height: 250px;
+            border: 1px solid #ccc;
+            margin: 20px auto;
+            position: relative; /* For Matter.js rendering */
+        }
+        #pay-button {
+            padding: 10px 15px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 10px;
+        }
+        #pay-button:hover {
+            background-color: #27ae60;
+        }
+        .matter-body-coin { /* For styling Matter.js bodies if needed via render options */
+            background-color: gold !important; /* Not directly applied by this, but for concept */
+        }
+        .matter-body-note {
+            background-color: lightgreen !important;
+        }
+
+        #page4-e-currency-visuals {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .e-currency-icon {
+            font-size: 2em;
+            padding: 10px;
+            background: #f1c40f;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 5px;
+        }
+        .data-stream {
+            width: 80%;
+            height: 10px;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+            background-size: 200% 100%;
+            border-radius: 5px;
+            animation: flow 2s linear infinite;
+        }
+        @keyframes flow {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        #page5-comparison {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        .comparison-col {
+            width: 45%;
+        }
+        #page5-future-sphere-container {
+            width: 100px;
+            height: 100px;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="presentation-container">
+        <!-- Page 1: What is Money? (Three.js) -->
+        <div id="page1" class="page">
+            <h1>What is Money?</h1>
+            <div id="page1-canvas-container"></div>
+            <p class="page1-text">Money is any item or verifiable record that is generally accepted as payment for goods and services and repayment of debts.</p>
+            <p class="page1-text">It primarily functions as a medium of exchange, a unit of account, and a store of value.</p>
+        </div>
+
+        <!-- Page 2: Uses & Advantages (Anime.js) -->
+        <div id="page2" class="page">
+            <h1>Uses & Advantages</h1>
+            <div id="page2-icons">
+                <div class="icon exchange-icon">🔄</div> <!-- Exchange -->
+                <div class="icon value-icon">⚖️</div>   <!-- Value -->
+                <div class="icon store-icon">🏦</div>    <!-- Store -->
+            </div>
+            <ul id="advantages-list">
+                <li><strong>Medium of Exchange:</strong> Facilitates transactions.</li>
+                <li><strong>Unit of Account:</strong> Provides a common measure of value.</li>
+                <li><strong>Store of Value:</strong> Can be saved and used later.</li>
+                <li><strong>Portable:</strong> Easy to carry.</li>
+                <li><strong>Divisible:</strong> Can be divided into smaller units.</li>
+                <li><strong>Durable:</strong> Lasts over time.</li>
+                <li><strong>Generally Accepted:</strong> Widely recognized.</li>
+            </ul>
+        </div>
+
+        <!-- Page 3: Traditional - Cash (Matter.js) -->
+        <div id="page3" class="page">
+            <h1>Traditional: Physical Cash</h1>
+            <div id="page3-matter-container"></div>
+            <button id="pay-button">Make it Rain!</button>
+            <p>Physical currency (coins and banknotes) has been the dominant form of money for centuries.</p>
+            <p><strong>Pros:</strong> Tangible, universally accepted, no transaction fees for users, private.
+            <br><strong>Cons:</strong> Bulky for large sums, can be lost/stolen, costly to produce/manage.</p>
+        </div>
+
+        <!-- Page 4: Modern - E-Currency (Anime.js + CSS) -->
+        <div id="page4" class="page">
+            <h1>Modern: E-Currency</h1>
+            <div id="page4-e-currency-visuals">
+                <div>
+                    <span class="e-currency-icon">💳</span> <!-- Card -->
+                    <span class="e-currency-icon">📱</span> <!-- Mobile -->
+                    <span class="e-currency-icon">₿</span> <!-- Bitcoin (example) -->
+                </div>
+                <div class="data-stream"></div>
+            </div>
+            <p>Electronic money exists only in banking computer systems and is not physically tangible.</p>
+            <p>Includes debit/credit cards, online transfers, mobile payments, and cryptocurrencies.</p>
+            <p><strong>Pros:</strong> Convenient for remote/large transactions, traceable, often lower handling costs for institutions.
+            <br><strong>Cons:</strong> Requires infrastructure, security concerns (hacking), potential fees, privacy issues.</p>
+        </div>
+
+        <!-- Page 5: Comparison & The Future -->
+        <div id="page5" class="page">
+            <h1>Comparison & The Future</h1>
+            <div id="page5-comparison">
+                <div class="comparison-col">
+                    <h2>Physical Money</h2>
+                    <ul class="comparison-list-physical">
+                        <li>Tangible</li>
+                        <li>Offline use</li>
+                        <li>High privacy</li>
+                    </ul>
+                </div>
+                <div class="comparison-col">
+                    <h2>Digital Money</h2>
+                    <ul class="comparison-list-digital">
+                        <li>Intangible</li>
+                        <li>Requires connectivity</li>
+                        <li>Traceable</li>
+                    </ul>
+                </div>
+            </div>
+            <p>The future likely involves a mix, with growing adoption of digital currencies, including Central Bank Digital Currencies (CBDCs).</p>
+            <div id="page5-future-sphere-container"></div>
+        </div>
+    </div>
+
+    <div id="navigation">
+        <button id="prev-btn" disabled>Previous</button>
+        <span id="page-indicator">1 / 5</span>
+        <button id="next-btn">Next</button>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const pageIndicator = document.getElementById('page-indicator');
+        let currentPageIndex = 0;
+        const totalPages = pages.length;
+
+        // Three.js, Matter.js instances - to be managed per page
+        let page1Scene, page1Camera, page1Renderer, page1Coin;
+        let page1AnimationId;
+
+        let matterEngine, matterRender, matterRunner;
+        let page3Elements = [];
+
+        let page5Scene, page5Camera, page5Renderer, page5Sphere;
+        let page5AnimationId;
+
+        function updatePageIndicator() {
+            pageIndicator.textContent = `${currentPageIndex + 1} / ${totalPages}`;
+        }
+
+        function showPage(index) {
+            // Cleanup previous page's dynamic elements
+            if (pages[currentPageIndex].id === "page1" && page1Renderer) {
+                cancelAnimationFrame(page1AnimationId);
+            }
+            if (pages[currentPageIndex].id === "page3" && matterRunner) {
+                Matter.Runner.stop(matterRunner);
+                Matter.Render.stop(matterRender);
+                Matter.World.clear(matterEngine.world);
+                Matter.Engine.clear(matterEngine);
+                if (matterRender.canvas) matterRender.canvas.remove();
+                matterRunner = null; matterRender = null; matterEngine = null;
+                page3Elements = [];
+            }
+             if (pages[currentPageIndex].id === "page5" && page5Renderer) {
+                cancelAnimationFrame(page5AnimationId);
+            }
+
+
+            pages.forEach((page, i) => {
+                page.classList.toggle('active', i === index);
+            });
+            currentPageIndex = index;
+            prevBtn.disabled = currentPageIndex === 0;
+            nextBtn.disabled = currentPageIndex === totalPages - 1;
+            updatePageIndicator();
+
+            // Initialize current page's dynamic elements
+            if (pages[currentPageIndex].id === "page1") initPage1();
+            if (pages[currentPageIndex].id === "page2") initPage2();
+            if (pages[currentPageIndex].id === "page3") initPage3();
+            if (pages[currentPageIndex].id === "page4") initPage4();
+            if (pages[currentPageIndex].id === "page5") initPage5();
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPageIndex < totalPages - 1) {
+                showPage(currentPageIndex + 1);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPageIndex > 0) {
+                showPage(currentPageIndex - 1);
+            }
+        });
+
+        // --- Page 1: Three.js Coin ---
+        function initPage1() {
+            const container = document.getElementById('page1-canvas-container');
+            if (!container || container.querySelector('canvas')) return; // Already initialized or no container
+
+            page1Scene = new THREE.Scene();
+            page1Scene.background = new THREE.Color(0xffffff); 
+
+            page1Camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            page1Camera.position.z = 3;
+
+            page1Renderer = new THREE.WebGLRenderer({ antialias: true });
+            page1Renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(page1Renderer.domElement);
+
+            const geometry = new THREE.CylinderGeometry(1, 1, 0.2, 32);
+            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.3 });
+            page1Coin = new THREE.Mesh(geometry, material);
+            page1Scene.add(page1Coin);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            page1Scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 0.8);
+            pointLight.position.set(2, 3, 4);
+            page1Scene.add(pointLight);
+
+            function animatePage1() {
+                page1AnimationId = requestAnimationFrame(animatePage1);
+                if (page1Coin) {
+                    page1Coin.rotation.y += 0.01;
+                    page1Coin.rotation.x += 0.005;
+                }
+                page1Renderer.render(page1Scene, page1Camera);
+            }
+            animatePage1();
+
+            anime({
+                targets: '.page1-text',
+                translateY: [20, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(200, {start: 300}),
+                easing: 'easeOutExpo'
+            });
+        }
+
+        // --- Page 2: Anime.js Icons & List ---
+        function initPage2() {
+            anime.timeline({ easing: 'easeOutExpo' })
+                .add({
+                    targets: '#page2 .icon',
+                    scale: [0, 1],
+                    opacity: [0, 1],
+                    delay: anime.stagger(200)
+                })
+                .add({
+                    targets: '#advantages-list li',
+                    translateX: [-50, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(100)
+                }, '-=500'); // Start this animation 500ms before the previous one ends
+        }
+
+        // --- Page 3: Matter.js Cash ---
+        function initPage3() {
+            const container = document.getElementById('page3-matter-container');
+            if (!container || container.querySelector('canvas')) return; // Already initialized or no container
+
+            matterEngine = Matter.Engine.create();
+            const world = matterEngine.world;
+            
+            matterRender = Matter.Render.create({
+                element: container,
+                engine: matterEngine,
+                options: {
+                    width: container.clientWidth,
+                    height: container.clientHeight,
+                    wireframes: false,
+                    background: '#f9f9f9'
+                }
+            });
+
+            const ground = Matter.Bodies.rectangle(container.clientWidth / 2, container.clientHeight + 25, container.clientWidth, 50, { isStatic: true, render: { fillStyle: '#cccccc' } });
+            const leftWall = Matter.Bodies.rectangle(-25, container.clientHeight / 2, 50, container.clientHeight, { isStatic: true, render: { fillStyle: '#cccccc' } });
+            const rightWall = Matter.Bodies.rectangle(container.clientWidth + 25, container.clientHeight / 2, 50, container.clientHeight, { isStatic: true, render: { fillStyle: '#cccccc' } });
+            
+            // A "slot" or catcher
+            const catcherWidth = container.clientWidth * 0.6;
+            const catcherHeight = 20;
+            const catcherY = container.clientHeight - 50;
+            const catcher = Matter.Bodies.rectangle(container.clientWidth / 2, catcherY, catcherWidth, catcherHeight, { 
+                isStatic: true, 
+                render: { fillStyle: '#555555' } 
+            });
+            const catcherLeftWall = Matter.Bodies.rectangle(container.clientWidth / 2 - catcherWidth/2, catcherY - 30, 10, 60, { isStatic: true, render: {fillStyle: '#555555'}});
+            const catcherRightWall = Matter.Bodies.rectangle(container.clientWidth / 2 + catcherWidth/2, catcherY - 30, 10, 60, { isStatic: true, render: {fillStyle: '#555555'}});
+
+
+            Matter.World.add(world, [ground, leftWall, rightWall, catcher, catcherLeftWall, catcherRightWall]);
+
+            Matter.Render.run(matterRender);
+            matterRunner = Matter.Runner.create();
+            Matter.Runner.run(matterRunner, matterEngine);
+
+            const payButton = document.getElementById('pay-button');
+            payButton.onclick = () => { // Use onclick to ensure it's reassigned if page re-init
+                const x = container.clientWidth / 2 + (Math.random() - 0.5) * 50;
+                if (Math.random() > 0.5) { // Add a coin
+                    const coin = Matter.Bodies.circle(x, -30, 10 + Math.random() * 5, {
+                        restitution: 0.5,
+                        render: { fillStyle: `hsl(${40 + Math.random()*20}, 100%, 50%)` } // Shades of gold/yellow
+                    });
+                    page3Elements.push(coin);
+                    Matter.World.add(world, coin);
+                } else { // Add a note
+                    const note = Matter.Bodies.rectangle(x, -30, 50 + Math.random()*20, 20 + Math.random()*10, {
+                        restitution: 0.1,
+                        angle: Math.random() * Math.PI,
+                        render: { fillStyle: `hsl(120, 70%, ${60 + Math.random()*20}%)` } // Shades of green
+                    });
+                    page3Elements.push(note);
+                    Matter.World.add(world, note);
+                }
+                // Limit number of bodies for performance
+                if (page3Elements.length > 50) {
+                    Matter.World.remove(world, page3Elements.shift());
+                }
+            };
+        }
+
+        // --- Page 4: Anime.js E-currency ---
+        function initPage4() {
+            anime({
+                targets: '#page4 .e-currency-icon',
+                scale: [0.8, 1.1, 1],
+                rotate: ['-15deg', '15deg', '0deg'],
+                opacity: [0, 1],
+                delay: anime.stagger(200, {start: 300}),
+                duration: 800,
+                easing: 'easeInOutQuad'
+            });
+            anime({
+                targets: '#page4 .data-stream',
+                opacity: [0, 1],
+                translateY: [20,0],
+                delay: 800,
+                easing: 'easeOutExpo'
+            });
+        }
+
+        // --- Page 5: Comparison & Future (Three.js sphere) ---
+        function initPage5() {
+             anime.timeline({ easing: 'easeOutExpo' })
+                .add({
+                    targets: '.comparison-col h2',
+                    translateY: [-20, 0],
+                    opacity: [0,1],
+                    delay: anime.stagger(100)
+                })
+                .add({
+                    targets: '.comparison-col ul li',
+                    translateX: (el, i, l) => {
+                        return el.closest('.comparison-col').classList.contains('comparison-list-physical') ? [-30, 0] : [30, 0];
+                    },
+                    opacity: [0, 1],
+                    delay: anime.stagger(150, {start:200}),
+                }, '-=300');
+
+
+            const container = document.getElementById('page5-future-sphere-container');
+            if (!container || container.querySelector('canvas')) return;
+
+            page5Scene = new THREE.Scene();
+            page5Scene.background = new THREE.Color(0xffffff);
+
+            page5Camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            page5Camera.position.z = 2.5;
+
+            page5Renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            page5Renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(page5Renderer.domElement);
+
+            const geometry = new THREE.IcosahedronGeometry(0.8, 0); // Simpler geometry
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x3498db, 
+                metalness: 0.3, 
+                roughness: 0.6,
+                transparent: true,
+                opacity: 0.8,
+                wireframe: true
+            });
+            page5Sphere = new THREE.Mesh(geometry, material);
+            page5Scene.add(page5Sphere);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            page5Scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            directionalLight.position.set(1, 1, 1).normalize();
+            page5Scene.add(directionalLight);
+
+            function animatePage5() {
+                page5AnimationId = requestAnimationFrame(animatePage5);
+                if (page5Sphere) {
+                    page5Sphere.rotation.y += 0.008;
+                    page5Sphere.rotation.x += 0.003;
+                }
+                page5Renderer.render(page5Scene, page5Camera);
+            }
+            animatePage5();
+        }
+
+        // Initialize first page
+        showPage(0);
+
+    </script>
+</body>
+</html>
