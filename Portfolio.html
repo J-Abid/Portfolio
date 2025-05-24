@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Story of Money - Interactive Presentation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 1000px;
+            height: calc(100vh - 70px); 
+            position: relative;
+            background-color: #16213e;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow: hidden; 
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+            text-align: center;
+            overflow-y: auto; 
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease-in-out, visibility 0s linear 0s;
+        }
+
+        .page-content {
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .page h1 {
+            color: #00c6ff; 
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        
+        .page h2 {
+            color: #53b8bb;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .page p, .page ul {
+            font-size: 1.1em;
+            line-height: 1.6;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        .page ul {
+            list-style-position: inside;
+            padding-left: 0;
+        }
+        .page li {
+            margin-bottom: 8px;
+        }
+
+        #navigation {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            background-color: #0f3460;
+            width: 100%;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.3);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        #navigation button {
+            background-color: #e94560; 
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        #navigation button:hover, #navigation button.active-nav {
+            background-color: #00c6ff; 
+        }
+        
+        .canvas-container {
+            width: 100%;
+            max-width: 600px; /* Max width for canvas */
+            height: 250px; 
+            margin: 20px auto;
+            position: relative; 
+            border: 1px solid #53b8bb;
+            border-radius: 5px;
+            background-color: rgba(0,0,0,0.1); /* Slight background for canvas areas */
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Page 1: What is Money? -->
+        <div id="page1" class="page">
+            <div class="page-content">
+                <h1 class="anime-target">What is Money?</h1>
+                <div id="threeCanvasP1Container" class="canvas-container"></div>
+                <p class="anime-target">Money is any item or verifiable record that is generally accepted as payment for goods and services and repayment of debts, such as taxes, in a particular country or socio-economic context.</p>
+                <h2 class="anime-target">Key Functions:</h2>
+                <ul class="anime-target">
+                    <li>A medium of exchange</li>
+                    <li>A unit of account</li>
+                    <li>A store of value</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page 2: Uses & Advantages -->
+        <div id="page2" class="page">
+            <div class="page-content">
+                <h1 class="anime-target">Uses & Advantages</h1>
+                <div id="matterCanvasP2Container" class="canvas-container"></div>
+                <button id="dropItemP2" class="anime-target">Drop Item (Barter)</button>
+                <button id="introduceMoneyP2" class="anime-target">Introduce Money</button>
+                <p class="anime-target">Money simplifies trade and economic calculation.</p>
+                <h2 class="anime-target">Advantages:</h2>
+                <ul class="anime-target">
+                    <li><b>Overcomes Barter:</b> Eliminates the "double coincidence of wants."</li>
+                    <li><b>Facilitates Specialization:</b> People can focus on specific goods/services.</li>
+                    <li><b>Standardized Value:</b> Easy comparison of item worth.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page 3: Traditional Methods -->
+        <div id="page3" class="page">
+            <div class="page-content">
+                <h1 class="anime-target">Traditional Buying & Selling</h1>
+                <div id="matterCanvasP3Container" class="canvas-container"></div>
+                <button id="dropCashP3" class="anime-target">Drop Cash</button>
+                <button id="dropCoinP3" class="anime-target">Drop Coin</button>
+                <h2 class="anime-target">Physical Cash (Notes & Coins)</h2>
+                <ul class="anime-target">
+                    <li><b>Pros:</b> Widely accepted, no user transaction fees, immediate.</li>
+                    <li><b>Cons:</b> Bulky, theft risk, hard for large transactions.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page 4: Modern Methods -->
+        <div id="page4" class="page">
+            <div class="page-content">
+                <h1 class="anime-target">Modern Methods</h1>
+                <div class="icon-container anime-target" style="display: flex; justify-content: space-around; margin-top: 30px; width: 100%;">
+                    <div class="payment-icon anime-icon" id="creditCardIcon" style="width: 80px; height: 80px; background-color: #53b8bb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; color: #16213e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer;">Card</div>
+                    <div class="payment-icon anime-icon" id="onlineBankingIcon" style="width: 80px; height: 80px; background-color: #53b8bb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; color: #16213e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer;">Online</div>
+                    <div class="payment-icon anime-icon" id="mobilePayIcon" style="width: 80px; height: 80px; background-color: #53b8bb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; color: #16213e; box-shadow: 0 4px 8px rgba(0,0,0,0.3); cursor: pointer;">Mobile</div>
+                </div>
+                <h2 class="anime-target">Credit & Debit Cards</h2>
+                <ul class="anime-target">
+                    <li><b>Pros:</b> Convenient, secure (protections), good for online/large purchases.</li>
+                    <li><b>Cons:</b> Merchant fees, debt potential (credit), requires infrastructure.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page 5: E-Currency & The Future -->
+        <div id="page5" class="page">
+            <div class="page-content">
+                <h1 class="anime-target">E-Currency & The Future</h1>
+                 <div id="threeCanvasP5Container" class="canvas-container"></div>
+                <h2 class="anime-target">Cryptocurrencies</h2>
+                <ul class="anime-target">
+                    <li><b>Pros:</b> Decentralized, potential lower fees, transparent ledger.</li>
+                    <li><b>Cons:</b> Volatile, complex, scalability, regulatory uncertainty.</li>
+                </ul>
+                <p class="anime-target">The future of money is evolving rapidly towards digital forms.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="navigation">
+        <button data-page="1" class="nav-btn active-nav">Intro</button>
+        <button data-page="2" class="nav-btn">Uses</button>
+        <button data-page="3" class="nav-btn">Traditional</button>
+        <button data-page="4" class="nav-btn">Modern</button>
+        <button data-page="5" class="nav-btn">Future</button>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        let currentPage = 0; // Use 0-indexed if it makes logic cleaner
+
+        let threeInstances = {}; 
+        let matterInstances = {}; 
+
+        function showPage(pageNumber) {
+            const pageId = `page${pageNumber}`;
+            
+            anime.remove('.anime-target'); // Remove all previous anime instances targeting this class
+
+            pages.forEach(p => {
+                p.classList.remove('active');
+            });
+            
+            const activePage = document.getElementById(pageId);
+            if (!activePage) { console.error("Page not found:", pageId); return; }
+            activePage.classList.add('active');
+
+            navButtons.forEach(btn => {
+                btn.classList.remove('active-nav');
+                if (parseInt(btn.dataset.page) === pageNumber) {
+                    btn.classList.add('active-nav');
+                }
+            });
+
+            // Teardown previous page's dynamic content
+            // Three.js cleanup
+            if (threeInstances.current && threeInstances.current.renderer) {
+                if (threeInstances.current.animationFrameId) {
+                    cancelAnimationFrame(threeInstances.current.animationFrameId);
+                }
+                if (threeInstances.current.renderer.domElement.parentElement) {
+                     threeInstances.current.renderer.domElement.parentElement.removeChild(threeInstances.current.renderer.domElement);
+                }
+                threeInstances.current.renderer.dispose();
+                if(threeInstances.current.scene) { // Dispose scene children
+                    while(threeInstances.current.scene.children.length > 0){ 
+                        const object = threeInstances.current.scene.children[0];
+                        if(object.geometry) object.geometry.dispose();
+                        if(object.material) {
+                            if(object.material.map) object.material.map.dispose();
+                            object.material.dispose();
+                        }
+                        threeInstances.current.scene.remove(object); 
+                    }
+                }
+                threeInstances.current = null;
+            }
+            // Matter.js cleanup
+            if (matterInstances.current && matterInstances.current.engine) {
+                Matter.Render.stop(matterInstances.current.render);
+                if (matterInstances.current.runner) Matter.Runner.stop(matterInstances.current.runner); // Check if runner exists
+                Matter.World.clear(matterInstances.current.engine.world, false); // Keep static bodies if needed, or true to clear all
+                Matter.Engine.clear(matterInstances.current.engine);
+                if (matterInstances.current.render.canvas && matterInstances.current.render.canvas.parentElement) {
+                    matterInstances.current.render.canvas.parentElement.removeChild(matterInstances.current.render.canvas);
+                }
+                matterInstances.current = null;
+            }
+            
+            currentPage = pageNumber; // Update current page tracking
+
+            // Initialize current page's dynamic content
+            // Ensure this switch uses the correct pageNumber (1-indexed from button data-page)
+            switch(pageNumber) {
+                case 1: initPage1(); break;
+                case 2: initPage2(); break;
+                case 3: initPage3(); break;
+                case 4: initPage4(); break;
+                case 5: initPage5(); break;
+            }
+
+            const targets = activePage.querySelectorAll('.anime-target');
+            if (targets.length > 0) {
+                anime({
+                    targets: targets,
+                    translateY: [20, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(100, { start: 200 }),
+                    easing: 'easeOutExpo',
+                    duration: 800
+                });
+            }
+        }
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showPage(parseInt(button.dataset.page));
+            });
+        });
+
+        function commonResizeHandler(containerId, instanceManager, type) {
+            const container = document.getElementById(containerId);
+            if (!container || !instanceManager.current) return;
+            
+            const currentInstance = instanceManager.current;
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+
+            if (type === 'three') {
+                currentInstance.camera.aspect = newWidth / newHeight;
+                currentInstance.camera.updateProjectionMatrix();
+                currentInstance.renderer.setSize(newWidth, newHeight);
+            } else if (type === 'matter') {
+                // Matter.js render bounds update
+                currentInstance.render.bounds.max.x = newWidth;
+                currentInstance.render.bounds.max.y = newHeight;
+                currentInstance.render.options.width = newWidth;
+                currentInstance.render.options.height = newHeight;
+                currentInstance.render.canvas.width = newWidth;
+                currentInstance.render.canvas.height = newHeight;
+                // Re-position static bodies like ground, walls (simplified here)
+                // Example for ground:
+                const ground = Matter.Composite.allBodies(currentInstance.engine.world).find(body => body.label === 'ground');
+                if (ground) {
+                    Matter.Body.setPosition(ground, { x: newWidth / 2, y: newHeight - (ground.bounds.max.y - ground.bounds.min.y) / 2 });
+                    Matter.Body.setVertices(ground, Matter.Vertices.fromPath(`L 0 0 L ${newWidth} 0 L ${newWidth} 20 L 0 20`)); // If it's a rectangle
+                }
+            }
+        }
+        
+        // --- Page 1: What is Money? (Three.js) ---
+        function initPage1() {
+            const container = document.getElementById('threeCanvasP1Container');
+            if (!container || container.querySelector('canvas')) return; 
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0); 
+            container.appendChild(renderer.domElement);
+
+            const geometry = new THREE.CylinderGeometry(1, 1, 0.15, 32); // Slimmer coin
+            const material = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.3 });
+            const coin = new THREE.Mesh(geometry, material);
+            scene.add(coin);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 0.9, 100);
+            pointLight.position.set(3, 3, 3);
+            scene.add(pointLight);
+
+            camera.position.z = 2.5;
+
+            let animationFrameId;
+            function animateP1() {
+                animationFrameId = requestAnimationFrame(animateP1);
+                coin.rotation.x += 0.003;
+                coin.rotation.y += 0.007;
+                renderer.render(scene, camera);
+            }
+            animateP1();
+            threeInstances.current = { scene, renderer, camera, animationFrameId, containerId: 'threeCanvasP1Container' };
+            window.addEventListener('resize', () => commonResizeHandler('threeCanvasP1Container', threeInstances, 'three'));
+        }
+
+        // --- Page 2: Uses & Advantages (Matter.js) ---
+        function initPage2() {
+            const container = document.getElementById('matterCanvasP2Container');
+            if (!container || container.querySelector('canvas')) return;
+
+            const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, World = Matter.World;
+
+            const engine = Engine.create({ gravity: { y: 0.4 } });
+            const render = Render.create({
+                element: container, engine: engine,
+                options: { width: container.clientWidth, height: container.clientHeight, wireframes: false, background: 'transparent' }
+            });
+
+            const ground = Bodies.rectangle(container.clientWidth / 2, container.clientHeight - 10, container.clientWidth, 20, { isStatic: true, label: 'ground', render: { fillStyle: '#53b8bb' } });
+            let barterWall = Bodies.rectangle(container.clientWidth / 2, container.clientHeight * 0.6, 10, 120, { isStatic: true, label: "barterWall", render: { fillStyle: '#e94560' } });
+            
+            World.add(engine.world, [ground, barterWall]);
+
+            document.getElementById('dropItemP2').onclick = () => {
+                const item = Bodies.circle(Math.random() * container.clientWidth * 0.7 + container.clientWidth * 0.15, 20, 12, {
+                    restitution: 0.5, render: { fillStyle: '#00c6ff' }
+                });
+                World.add(engine.world, item);
+            };
+            
+            const introduceMoneyBtn = document.getElementById('introduceMoneyP2');
+            introduceMoneyBtn.onclick = function() {
+                if (Composite.get(engine.world, barterWall.id, 'body')) { // Check if wall exists
+                    World.remove(engine.world, barterWall); 
+                }
+                // Add money slots or similar visual indication
+                const moneyToken = Bodies.polygon(container.clientWidth / 2, 20, 5, 15, { restitution: 0.3, render: { fillStyle: '#ffd700' } });
+                World.add(engine.world, moneyToken);
+                this.disabled = true; 
+            };
+
+            Render.run(render);
+            const runner = Runner.create();
+            Runner.run(runner, engine);
+            matterInstances.current = { engine, render, runner, containerId: 'matterCanvasP2Container' };
+            window.addEventListener('resize', () => commonResizeHandler('matterCanvasP2Container', matterInstances, 'matter'));
+        }
+
+        // --- Page 3: Traditional Methods (Matter.js) ---
+        function initPage3() {
+            const container = document.getElementById('matterCanvasP3Container');
+             if (!container || container.querySelector('canvas')) return;
+
+            const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, World = Matter.World, Mouse = Matter.Mouse, MouseConstraint = Matter.MouseConstraint;
+
+            const engine = Engine.create({ gravity: { y: 0.5 } });
+            const render = Render.create({
+                element: container, engine: engine,
+                options: { width: container.clientWidth, height: container.clientHeight, wireframes: false, background: 'transparent'}
+            });
+
+            const ground = Bodies.rectangle(container.clientWidth / 2, container.clientHeight - 5, container.clientWidth, 10, { isStatic: true, label: 'ground', render: { fillStyle: '#53b8bb' } });
+            const leftWall = Bodies.rectangle(5, container.clientHeight / 2, 10, container.clientHeight, { isStatic: true, render: { fillStyle: '#53b8bb' } });
+            const rightWall = Bodies.rectangle(container.clientWidth - 5, container.clientHeight / 2, 10, container.clientHeight, { isStatic: true, render: { fillStyle: '#53b8bb' } });
+            
+            const piggyBank = Bodies.rectangle(container.clientWidth / 2, container.clientHeight - 45, 70, 50, { 
+                isStatic: true, render: { fillStyle: '#e94560' }, chamfer: { radius: 8 }
+            });
+            World.add(engine.world, [ground, leftWall, rightWall, piggyBank]);
+            
+            document.getElementById('dropCashP3').onclick = () => {
+                const cash = Bodies.rectangle(Math.random() * (container.clientWidth - 70) + 35, 20, 50, 25, {
+                    restitution: 0.1, friction: 0.7, render: { fillStyle: '#2E8B57' } 
+                });
+                World.add(engine.world, cash);
+            };
+            document.getElementById('dropCoinP3').onclick = () => {
+                const coin = Bodies.circle(Math.random() * (container.clientWidth - 50) + 25, 20, 10, {
+                    restitution: 0.4, friction: 0.5, render: { fillStyle: '#B8860B' } 
+                });
+                World.add(engine.world, coin);
+            };
+            
+            const mouse = Mouse.create(render.canvas);
+            const mouseConstraint = MouseConstraint.create(engine, {
+                mouse: mouse, constraint: { stiffness: 0.2, render: { visible: false } }
+            });
+            World.add(engine.world, mouseConstraint);
+            render.mouse = mouse;
+
+            Render.run(render);
+            const runner = Runner.create();
+            Runner.run(runner, engine);
+            matterInstances.current = { engine, render, runner, containerId: 'matterCanvasP3Container' };
+             window.addEventListener('resize', () => commonResizeHandler('matterCanvasP3Container', matterInstances, 'matter'));
+        }
+
+        // --- Page 4: Modern Methods (Anime.js) ---
+        function initPage4() {
+            const icons = document.querySelectorAll('#page4 .payment-icon');
+            icons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    anime.remove(icon); // Remove previous animation on this icon
+                    anime({
+                        targets: icon,
+                        scale: [1, 1.2, 1],
+                        duration: 500,
+                        easing: 'easeInOutSine'
+                    });
+                });
+            });
+            // Animate icons on load, already handled by .anime-target in showPage
+        }
+
+        // --- Page 5: E-Currency & The Future (Three.js) ---
+        function initPage5() {
+            const container = document.getElementById('threeCanvasP5Container');
+            if (!container || container.querySelector('canvas')) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 600;
+            const posArray = new Float32Array(particlesCount * 3);
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 8; // Slightly smaller spread
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.04, color: 0x00c6ff, transparent: true, opacity: 0.8 });
+            const particleMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particleMesh);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            camera.position.z = 3.5;
+            
+            let animationFrameId;
+            const clock = new THREE.Clock();
+            function animateP5() {
+                const elapsedTime = clock.getElapsedTime();
+                animationFrameId = requestAnimationFrame(animateP5);
+                particleMesh.rotation.y = elapsedTime * 0.08;
+                particleMesh.rotation.x = elapsedTime * 0.04;
+                renderer.render(scene, camera);
+            }
+            animateP5();
+            threeInstances.current = { scene, renderer, camera, animationFrameId, containerId: 'threeCanvasP5Container' };
+             window.addEventListener('resize', () => commonResizeHandler('threeCanvasP5Container', threeInstances, 'three'));
+        }
+
+        // Initial Page Load
+        showPage(1); // Ensure this is 1-indexed
+
+    </script>
+</body>
+</html>
